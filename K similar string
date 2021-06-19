@@ -1,0 +1,46 @@
+Strings s1 and s2 are k-similar (for some non-negative integer k) if we can swap the positions of two letters in s1 exactly k times so that the resulting string equals s2.
+
+Given two anagrams s1 and s2, return the smallest k for which s1 and s2 are k-similar.
+
+ 
+
+Example 1:
+
+Input: s1 = "ab", s2 = "ba"
+Output: 1
+Example 2:
+
+Input: s1 = "abc", s2 = "bca"
+Output: 2
+
+
+
+
+
+
+
+class Solution {
+    public int kSimilarity(String s1, String s2) {
+        return backtrack(s1.toCharArray() , s2.toCharArray() , 0);
+    }
+    public static int backtrack(char[] a , char[] b , int index){
+        if(index == a.length) return 0;
+        
+        if(a[index] == b[index]) return backtrack(a , b , index + 1);
+        
+        int ans = Integer.MAX_VALUE;
+        for(int i = index + 1 ; i < a.length ; i++){
+            if(a[i] == b[index] && a[i] != b [i]){
+                swap(a , i , index);
+                ans = Math.min(ans , backtrack(a , b , index + 1));
+                swap(a , i , index);
+            }
+        }
+        return ans + 1;
+    }
+    static void swap(char[] a , int i , int j){
+        char temp = a[i];
+        a[i] = a[j];
+        a[j] = temp;
+    }
+}
