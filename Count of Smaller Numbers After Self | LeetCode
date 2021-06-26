@@ -1,0 +1,185 @@
+//->   using merge sort (inversion count logic)
+class Solution {
+    public List<Integer> countSmaller(int[] nums) {
+        int n = nums.length;
+        List<Integer> count = new ArrayList<>();
+        for(int i=0; i<n; i++) count.add(0);
+        sort(count,nums,0,n-1);
+        return count;
+    }
+    
+    int[] merge(List<Integer> count,int[]nums, int[]left, int[]right){
+        int m = left.length;
+        int n = right.length;
+        int i=0, j=0, k=0;
+        int[] arr = new int[m+n];
+        int[]temp = new int[m];
+        
+        while(i < m && j < n){
+            if(nums[left[i]] > nums[right[j]]){
+                temp[i] += 1; //denotes inversion count for every index starting from i to m
+                arr[k++] = right[j++];
+            }
+            else{
+                arr[k++] = left[i++];
+            }
+        }
+        while(i < m) arr[k++] = left[i++];
+        while(j < n) arr[k++] = right[j++];
+		
+        //update the count for every indices
+        int curr = 0;
+        for(int d=0;d<m;d++){
+            curr += temp[d];
+            count.set(left[d],count.get(left[d]) + curr);
+        }
+        
+        return arr;
+    }
+    
+    int[] sort(List<Integer> count, int[]nums, int start, int end){
+        if(start > end) return new int[]{};
+        if(start == end) return new int[]{start};
+        int mid = start + (end-start)/2;
+        int[]left = sort(count,nums,start,mid);
+        int[]right = sort(count,nums,mid+1,end);
+        return merge(count,nums,left,right);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//->  using AVL TREE
+
+class Solution {
+    class TreeNode {
+        int val;
+        int height;
+        
+        int freq;       // frequency of node with val
+        int countLeft;  // number of nodes in TreeNode left (with smaller value than val)
+        
+        TreeNode left;
+        TreeNode right;
+        
+        public TreeNode(int val) {
+            this.val = val;
+            this.freq = 1;
+            this.countLeft = 0;
+        }
+    }
+    
+    class AVLTree {
+        TreeNode root;
+        
+        AVLTree(int val) {
+            this.root = new TreeNode(val);
+        }
+
+        void updateHeight(TreeNode n) {
+            n.height = 1 + Math.max(height(n.left), height(n.right));
+        }
+
+        int height(TreeNode n) {
+            return n == null ? -1 : n.height;
+        }
+
+        int getBalance(TreeNode n) {
+            return (n == null) ? 0 : height(n.right) - height(n.left);
+        }
+        
+        TreeNode rotateRight(TreeNode y) {
+            TreeNode x = y.left;
+            TreeNode B = x.right;
+            x.right = y;
+            y.left = B;
+            
+            y.countLeft = y.countLeft - x.countLeft - x.freq;
+            
+            updateHeight(y);
+            updateHeight(x);
+            return x;
+        }
+        
+        TreeNode rotateLeft(TreeNode y) {
+            TreeNode x = y.right;
+            TreeNode B = x.left;
+            x.left = y;
+            y.right = B;
+            
+            x.countLeft = x.countLeft + y.countLeft + y.freq;
+            
+            updateHeight(y);
+            updateHeight(x);
+            return x;
+        }
+        
+        TreeNode rebalance(TreeNode z) {
+            updateHeight(z);
+            int balance = getBalance(z);
+            if (balance > 1) {
+                if (height(z.right.right) > height(z.right.left)) {
+                    z = rotateLeft(z);
+                } else {
+                    z.right = rotateRight(z.right);
+                    z = rotateLeft(z);
+                }
+            } else if (balance < -1) {
+                if (height(z.left.left) > height(z.left.right))
+                    z = rotateRight(z);
+                else {
+                    z.left = rotateLeft(z.left);
+                    z = rotateRight(z);
+                }
+            }
+            return z;
+        }
+        
+
+        int total = 0;  // recording the result after each insertion
+        
+        TreeNode insert(TreeNode node, int key, int count) {
+            if (node == null) {
+                total = count;
+                return new TreeNode(key);
+            }
+            
+            
+            if (node.val > key) {
+                node.countLeft++;
+                
+                node.left = insert(node.left, key, count);
+            } else if (node.val < key){
+                count = count + node.countLeft + node.freq;
+                
+                node.right = insert(node.right, key, count);
+            } else {
+                node.freq++;
+                count = count + node.countLeft;
+                
+                total = count;
+            }
+            
+            return rebalance(node);
+        }        
+  
+    }
+    
+    
+    
+    public List<Integer> countSmaller(int[] nums) {
+        List<Integer> res = new LinkedList<>();
+        
+        int n = nums.length;
+        AVLTree avlTree = new AVLTree(nums[n-1]);
+        res.add(0);
+        
+        for (int i = n-2; i >= 0; i--) {
+            avlTree.root = avlTree.insert(avlTree.root, nums[i], 0);
+        
+            res.add(0, avlTree.total);
+            avlTree.total = 0;
+        }
+        
+        return res;
+    }
+}
